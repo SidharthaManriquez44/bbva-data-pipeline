@@ -1,0 +1,58 @@
+services:
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+
+  airflow-init:
+    image: apache/airflow:2.9.0
+    depends_on:
+      - postgres
+    environment:
+        AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    command: >
+        bash -c "airflow db migrate && airflow users create --username airflow --password airflow --firstname admin --lastname admin --role Admin --email admin@email.com"
+
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      PYTHONPATH: /opt/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./sql:/opt/airflow/sql
+      - ./data:/opt/airflow/data
+    ports:
+      - "8085:8080"
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    depends_on:
+      - airflow-webserver
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      PYTHONPATH: /opt/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./sql:/opt/airflow/sql
+      - ./data:/opt/airflow/data
+    command: scheduler
