@@ -5,7 +5,6 @@ from src.utils.sql_loader import load_sql
 
 
 def load_raw_data(df, connection=None):
-
     batch_id = int(time.time())
     df["batch_id"] = batch_id
 

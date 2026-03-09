@@ -5,7 +5,6 @@ from src.load.load_raw import load_raw_data
 @patch("src.load.load_raw.load_sql")
 @patch("src.load.load_raw.get_engine")
 def test_load_raw_data(mock_get_engine, mock_load_sql, fake_data):
-
     mock_load_sql.return_value = "INSERT INTO table VALUES (...)"
 
     fake_conn = MagicMock()

@@ -4,7 +4,6 @@ from src.utils.sql_loader import load_sql
 
 
 def load_dim_channel(connection=None):
-
     query = text(load_sql("core", "insert_channel_dimension.sql"))
 
     if connection is not None:

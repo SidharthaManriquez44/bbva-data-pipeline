@@ -12,13 +12,14 @@ from src.data_access.etl_run_repository import ETLRunRepository
 from src.data_access.watermark_repository import WatermarkRepository
 from src.data_quality.bank_quality_checks import run_bank_quality_checks
 from dotenv import load_dotenv
+
 load_dotenv()
 
 logger = get_logger(__name__)
 pipeline_name = "bbva_data_pipeline"
 
-def run_pipeline():
 
+def run_pipeline():
     repo = ETLRunRepository()
     run_id = repo.start_run(pipeline_name)
     watermark_repo = WatermarkRepository()
@@ -64,7 +65,7 @@ def run_pipeline():
         repo.finish_run(run_id, rows_loaded=len(df_clean))
 
         # Calculate new watermark
-        new_watermark =  int(df["year"].max())
+        new_watermark = int(df["year"].max())
 
         # Update watermark
         watermark_repo.update_last_year(pipeline_name, new_watermark)
@@ -73,11 +74,11 @@ def run_pipeline():
         logger.info("Pipeline finished successfully.")
 
     except Exception as e:
-
         repo.fail_run(run_id, str(e))
         logger.error("Pipeline failed", exc_info=True)
 
         raise
+
 
 if __name__ == "__main__":
     run_pipeline()

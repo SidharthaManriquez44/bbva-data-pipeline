@@ -13,35 +13,25 @@ from src.load.load_fact import load_fact_table
 from src.load.load_mart import MartLoader
 
 
-@dag(
-    dag_id="bbva_data_pipeline",
-    start_date=datetime(2024,1,1),
-    schedule="@daily",
-    catchup=False
-)
+@dag(dag_id="bbva_data_pipeline", start_date=datetime(2024, 1, 1), schedule="@daily", catchup=False)
 def bbva_pipeline():
-
     @task
     def extract():
         return extract_bbva_data()
-
 
     @task
     def quality(df):
         run_bank_quality_checks(df)
         return df
 
-
     @task
     def raw(df):
         load_raw_data(df)
         return df
 
-
     @task
     def staging(df):
         load_staging_data(df)
-
 
     with TaskGroup("dimensions") as dimensions:
 
@@ -61,16 +51,13 @@ def bbva_pipeline():
         channel()
         date()
 
-
     @task
     def fact():
         load_fact_table()
 
-
     @task
     def marts():
         MartLoader().load_all()
-
 
     df = extract()
 

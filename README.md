@@ -35,7 +35,7 @@ bbva-data-pipeline
 ├── airflow/                # Airflow orchestration
 │   ├── dags/
 │       └── bbva_pipeline_dag.py
-│   
+│
 │
 ├── src/                    # Application layer
 │
@@ -221,5 +221,5 @@ Potential improvements include:
 
 # Author
 
-**Sidhartha Manriquez**  
+**Sidhartha Manriquez**
 Data Architecture | Data Platforms | Financial Analytics Engineering

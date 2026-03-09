@@ -1,7 +1,7 @@
 import pandas as pd
 
-def clean_bank_metrics(df):
 
+def clean_bank_metrics(df):
     df = df.copy()
 
     numeric_cols = [
@@ -12,7 +12,7 @@ def clean_bank_metrics(df):
         "digital_clients",
         "total_loans",
         "total_deposits",
-        "net_income"
+        "net_income",
     ]
 
     for col in numeric_cols:

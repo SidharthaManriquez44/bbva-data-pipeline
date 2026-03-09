@@ -1,5 +1,4 @@
 def run_bank_quality_checks(df):
-
     errors = []
 
     #  null checks
