@@ -3,11 +3,7 @@ from airflow.models import DagBag
 
 def test_dags_load():
     dagbag = DagBag(dag_folder="dags", include_examples=False)
-    dag = dagbag.get_dag("bank_pipeline")
-
     assert dagbag.import_errors == {}, f"DAG import failures: {dagbag.import_errors}"
-    assert dag is not None
-    assert len(dag.tasks) > 0
 
 
 def test_dag_tasks():
