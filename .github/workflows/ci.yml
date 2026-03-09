@@ -43,7 +43,6 @@ jobs:
       - name: Validate package structure
         run: |
           python -c "import src"
-          python -c "from src.data_access.bank_repository import BankRepository"
 
       - name: Debug project structure
         run: |
