@@ -1,0 +1,87 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHONUNBUFFERED: 1
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt -c constraints.txt
+          pip install -e .
+
+      - name: Validate package structure
+        run: |
+          python -c "import src"
+          python -c "from src.data_access.bank_repository import BankRepository"
+
+      - name: Debug project structure
+        run: |
+          echo "Working directory:"
+          pwd
+          echo "Project tree:"
+          ls -R
+
+      - name: Validate Airflow DAGs
+        run: |
+          python - <<EOF
+          from airflow.models import DagBag
+
+          dagbag = DagBag(dag_folder="airflow/dags", include_examples=False)
+
+          if dagbag.import_errors:
+              print("DAG Import Errors:")
+              for dag_id, error in dagbag.import_errors.items():
+                  print(f"{dag_id}: {error}")
+              raise Exception("DAG validation failed")
+
+          if not dagbag.dags:
+              raise Exception("No DAGs detected")
+
+          print(f"Loaded DAGs: {list(dagbag.dags.keys())}")
+          EOF
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report=term --cov-report=xml
+
+      - name: Lint code
+        run: |
+          pip install ruff
+          ruff check src
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          flags: unittests
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
