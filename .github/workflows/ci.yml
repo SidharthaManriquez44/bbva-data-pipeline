@@ -44,12 +44,39 @@ jobs:
         run: |
           python -c "import src"
 
+      - name: Validate all project imports
+        run: |
+          python - <<EOF
+          import pkgutil
+          import src
+
+          errors = []
+
+          for module in pkgutil.walk_packages(src.__path__, src.__name__ + "."):
+              try:
+                  __import__(module.name)
+              except Exception as e:
+                  errors.append((module.name, str(e)))
+
+          if errors:
+              print("Import errors detected:")
+              for module, err in errors:
+                  print(f"{module}: {err}")
+              raise Exception("Module import validation failed")
+
+          print("All modules imported successfully")
+          EOF
+
       - name: Debug project structure
         run: |
           echo "Working directory:"
           pwd
           echo "Project tree:"
           ls -R
+
+      - name: Lint SQL files
+        run: |
+          sqlfluff lint sql --dialect postgres
 
       - name: Validate Airflow DAGs
         run: |
@@ -67,7 +94,14 @@ jobs:
           if not dagbag.dags:
               raise Exception("No DAGs detected")
 
-          print(f"Loaded DAGs: {list(dagbag.dags.keys())}")
+          for dag_id, dag in dagbag.dags.items():
+              print(f"Validating DAG: {dag_id}")
+              print(f"Tasks: {len(dag.tasks)}")
+
+              if len(dag.tasks) == 0:
+                  raise Exception(f"DAG {dag_id} has no tasks")
+
+          print("All DAGs validated successfully")
           EOF
 
       - name: Run tests with coverage
