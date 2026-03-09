@@ -2,10 +2,13 @@
 
 
 [![CI Pipeline](https://github.com/SidharthaManriquez44/bbva-digital-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/SidharthaManriquez44/bbva-digital-analysis/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/SidharthaManriquez44/bbva-data-pipeline/graph/badge.svg?token=zTvLTbVmEl)](https://codecov.io/gh/SidharthaManriquez44/bbva-data-pipeline)
 ![Python](https://img.shields.io/badge/python-3.10-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
+![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-017CEE?logo=apache-airflow&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
 
 ## Overview
 
