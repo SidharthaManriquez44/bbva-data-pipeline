@@ -4,7 +4,7 @@ INSERT INTO meta.etl_runs (
     status
 )
 VALUES (
-    : pipeline_name,
+    :pipeline_name,
     NOW(),
     'running'
 )
