@@ -5,12 +5,16 @@ from src.load.load_staging import load_staging_data
 from src.load.bank_dimension import load_dim_bank
 from src.load.channel_dimension import load_dim_channel
 from src.load.date_dimension import load_dim_date
-from src.load.load_fact import load_fact_table
 from src.load.load_mart import MartLoader
+
 from src.config.logger_confing import get_logger
+
 from src.data_access.etl_run_repository import ETLRunRepository
+from src.load.load_fact import BankMetricsLoader
 from src.data_access.watermark_repository import WatermarkRepository
+
 from src.data_quality.bank_quality_checks import run_bank_quality_checks
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,11 +25,16 @@ pipeline_name = "bbva_data_pipeline"
 
 def run_pipeline():
     repo = ETLRunRepository()
-    run_id = repo.start_run(pipeline_name)
     watermark_repo = WatermarkRepository()
+    fact_loader = BankMetricsLoader()
+    mart_loader = MartLoader()
+
+    run_id = repo.start_run(pipeline_name)
 
     try:
         logger.info("Starting pipeline...")
+
+        # WATERMARK
         last_year = watermark_repo.get_last_year(pipeline_name)
 
         # EXTRACT
@@ -33,14 +42,15 @@ def run_pipeline():
         logger.info(f"Extracted {len(df)} rows")
 
         if df.empty:
-            logger.info("No new data")
+            logger.info("No new data to process")
+            repo.finish_run(run_id, rows_loaded=0)
             return
 
         # TRANSFORM
         df_clean = clean_bank_metrics(df)
 
-        # DATA QUALITY CHECKS
-        run_bank_quality_checks(df)
+        # DATA QUALITY
+        run_bank_quality_checks(df_clean)
         logger.info("Data quality checks passed")
 
         # RAW
@@ -55,26 +65,25 @@ def run_pipeline():
         load_dim_date()
 
         # FACT
-        load_fact_table()
+        rows_loaded = fact_loader.load(run_id)
 
         # MARTS
-        mart_loader = MartLoader()
         mart_loader.load_all()
 
-        # Close execution
-        repo.finish_run(run_id, rows_loaded=len(df_clean))
-
-        # Calculate new watermark
+        # UPDATE WATERMARK
         new_watermark = int(df["year"].max())
-
-        # Update watermark
         watermark_repo.update_last_year(pipeline_name, new_watermark)
+
         logger.info(f"Watermark updated to: {new_watermark}")
+
+        # FINISH RUN
+        repo.finish_run(run_id, rows_loaded=rows_loaded)
 
         logger.info("Pipeline finished successfully.")
 
     except Exception as e:
         repo.fail_run(run_id, str(e))
+
         logger.error("Pipeline failed", exc_info=True)
 
         raise

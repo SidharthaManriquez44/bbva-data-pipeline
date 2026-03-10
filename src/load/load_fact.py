@@ -3,12 +3,12 @@ from src.config.db_config import get_engine
 from src.utils.sql_loader import load_sql
 
 
-def load_fact_table(connection=None):
-    query = text(load_sql("core", "insert_fact_table.sql"))
+class BankMetricsLoader:
+    def __init__(self):
+        self.engine = get_engine()
+        self.sql = text(load_sql("core", "insert_fact_table.sql"))
 
-    if connection:
-        connection.execute(query)
-    else:
-        engine = get_engine()
-        with engine.begin() as conn:
-            conn.execute(query)
+    def load(self, run_id):
+        with self.engine.begin() as conn:
+            result = conn.execute(self.sql, {"run_id": run_id})
+            return result.rowcount
