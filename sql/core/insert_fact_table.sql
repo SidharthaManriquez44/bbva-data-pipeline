@@ -8,7 +8,8 @@ INSERT INTO core.fact_bank_metrics (
     total_clients,
     total_loans,
     total_deposits,
-    net_income
+    net_income,
+    etl_run_id
 )
 SELECT
     b.bank_key,
@@ -20,20 +21,23 @@ SELECT
     s.total_clients,
     s.total_loans,
     s.total_deposits,
-    s.net_income
-FROM staging.bank_year_metrics_clean s
-JOIN core.dim_bank b
-    ON b.bank_code = s.bank_code
-JOIN core.dim_date d
+    s.net_income,
+    e.etl_run_id
+FROM staging.bank_year_metrics_clean AS s
+INNER JOIN core.dim_bank AS b
+    ON s.bank_code = b.bank_code
+INNER JOIN core.dim_date AS d
     ON d.date = MAKE_DATE(s.year, 12, 31)
-JOIN core.dim_channel c
+INNER JOIN core.dim_channel AS c
     ON c.channel_code = 'TOTAL'
+INNER JOIN meta.etl_runs AS e
+    ON s.etl_run_id = e.run_id
 ON CONFLICT (bank_key, date_key, channel_key)
 DO UPDATE SET
-    branches = EXCLUDED.branches,
-    atms = EXCLUDED.atms,
-    digital_clients = EXCLUDED.digital_clients,
-    total_clients = EXCLUDED.total_clients,
-    total_loans = EXCLUDED.total_loans,
-    total_deposits = EXCLUDED.total_deposits,
-    net_income = EXCLUDED.net_income;
+    branches = excluded.branches,
+    atms = excluded.atms,
+    digital_clients = excluded.digital_clients,
+    total_clients = excluded.total_clients,
+    total_loans = excluded.total_loans,
+    total_deposits = excluded.total_deposits,
+    net_income = excluded.net_income;

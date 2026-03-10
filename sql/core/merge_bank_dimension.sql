@@ -5,20 +5,17 @@ USING (
         CASE
             WHEN bank_code = 'BBVA' THEN 'BBVA México'
             ELSE bank_code
-        END AS bank_name,
-        'México' AS country
+        END AS bank_name
     FROM staging.bank_year_metrics_clean
 ) AS source
-ON target.bank_code = source.bank_code
+    ON target.bank_code = source.bank_code
 
 WHEN NOT MATCHED THEN
-INSERT (
-    bank_code,
-    bank_name,
-    country
-)
-VALUES (
-    source.bank_code,
-    source.bank_name,
-    source.country
-);
+    INSERT (
+        bank_code,
+        bank_name
+    )
+    VALUES (
+        source.bank_code,
+        source.bank_name
+    );

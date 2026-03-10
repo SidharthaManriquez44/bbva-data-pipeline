@@ -4,19 +4,33 @@ INSERT INTO core.dim_date (
     year,
     quarter,
     month,
+    day,
+    month_name,
+    day_name,
+    week_of_year,
+    day_of_week,
+    is_weekend,
+    is_month_end,
+    is_quarter_end,
     is_year_end
 )
 SELECT
-    (y.year * 10000) + 1231,
-    MAKE_DATE(y.year, 12, 31),
-    y.year,
-    4,
-    12,
-    TRUE
-FROM (
-    SELECT DISTINCT year
-    FROM staging.bank_year_metrics_clean
-) y
-LEFT JOIN core.dim_date d
-    ON d.date_key = (y.year * 10000) + 1231
-WHERE d.date_key IS NULL;
+    TO_CHAR(d, 'YYYYMMDD')::INT AS date_key,
+    d AS date,
+    EXTRACT(YEAR FROM d)::SMALLINT AS year,
+    EXTRACT(QUARTER FROM d)::SMALLINT AS quarter,
+    EXTRACT(MONTH FROM d)::SMALLINT AS month,
+    EXTRACT(DAY FROM d)::SMALLINT AS day,
+    TO_CHAR(d, 'Month') AS month_name,
+    TO_CHAR(d, 'Day') AS day_name,
+    EXTRACT(WEEK FROM d)::SMALLINT AS week_of_year,
+    EXTRACT(ISODOW FROM d)::SMALLINT AS day_of_week,
+    EXTRACT(ISODOW FROM d) IN (6, 7) AS is_weekend,
+    (DATE_TRUNC('month', d) + INTERVAL '1 month - 1 day')::DATE = d AS is_month_end,
+    (DATE_TRUNC('quarter', d) + INTERVAL '3 month - 1 day')::DATE = d AS is_quarter_end,
+    (DATE_TRUNC('year', d) + INTERVAL '1 year - 1 day')::DATE = d AS is_year_end
+FROM GENERATE_SERIES(
+    '2000-01-01'::DATE,
+    '2035-12-31'::DATE,
+    INTERVAL '1 day'
+) AS d;
