@@ -5,8 +5,12 @@
 [![codecov](https://codecov.io/gh/SidharthaManriquez44/bbva-data-pipeline/graph/badge.svg?token=zTvLTbVmEl)](https://codecov.io/gh/SidharthaManriquez44/bbva-data-pipeline)
 ![Python](https://img.shields.io/badge/python-3.10-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+![Lint: Ruff](https://img.shields.io/badge/lint-ruff-blue)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
+![Data Platform](https://img.shields.io/badge/Data%20Platform-Engineering-blue)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen)](https://github.com/pre-commit/pre-commit)
+![pyproject.toml](https://img.shields.io/badge/config-pyproject.toml-blue)
+![SQLFluff](https://img.shields.io/badge/lint-SQLFluff-red)
 ![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-017CEE?logo=apache-airflow&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
 
@@ -54,11 +58,15 @@ bbva-data-pipeline
 │   ├── marts/
 │   └── meta/
 │
+├── .pre-commit-config.yaml
+│
 ├── docker-compose.yaml
 │
 ├── data/                   # Input datasets
 │
 ├── tests/                  # Unit tests
+│
+├── requirements.txt
 │
 └── README.md
 ```
