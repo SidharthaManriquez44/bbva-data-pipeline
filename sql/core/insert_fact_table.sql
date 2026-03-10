@@ -22,7 +22,7 @@ SELECT
     s.total_loans,
     s.total_deposits,
     s.net_income,
-    e.etl_run_id
+    :run_id AS etl_run_id
 FROM staging.bank_year_metrics_clean AS s
 INNER JOIN core.dim_bank AS b
     ON s.bank_code = b.bank_code
@@ -30,8 +30,6 @@ INNER JOIN core.dim_date AS d
     ON d.date = MAKE_DATE(s.year, 12, 31)
 INNER JOIN core.dim_channel AS c
     ON c.channel_code = 'TOTAL'
-INNER JOIN meta.etl_runs AS e
-    ON s.etl_run_id = e.run_id
 ON CONFLICT (bank_key, date_key, channel_key)
 DO UPDATE SET
     branches = excluded.branches,
