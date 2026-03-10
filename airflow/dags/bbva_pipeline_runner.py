@@ -93,9 +93,9 @@ def bbva_pipeline():
     # FACT
 
     @task
-    def fact(run_id):
+    def fact(etl_run_id):
         loader = BankMetricsLoader()
-        return loader.load(run_id)
+        return loader.load(etl_run_id)
 
     # MARTS
 
@@ -114,20 +114,20 @@ def bbva_pipeline():
     # META SUCCESS
 
     @task(trigger_rule=TriggerRule.ALL_SUCCESS)
-    def finish_run(run_id, rows_loaded):
+    def finish_run(etl_run_id, rows_loaded):
         repo = ETLRunRepository()
-        repo.finish_run(run_id, rows_loaded)
+        repo.finish_run(etl_run_id, rows_loaded)
 
     # META FAIL
 
     @task(trigger_rule=TriggerRule.ONE_FAILED)
-    def fail_run(run_id):
+    def fail_run(etl_run_id):
         repo = ETLRunRepository()
-        repo.fail_run(run_id, "Pipeline failed")
+        repo.fail_run(etl_run_id, "Pipeline failed")
 
     # FLOW
 
-    run_id = start_run()
+    etl_run_id = start_run()
 
     last_year = get_watermark()
 
@@ -143,19 +143,19 @@ def bbva_pipeline():
 
     df >> dimensions
 
-    rows_loaded = fact(run_id)
+    rows_loaded = fact(etl_run_id)
 
     marts_task = marts()
 
     update = update_watermark(df)
 
-    finish = finish_run(run_id, rows_loaded)
+    finish = finish_run(etl_run_id, rows_loaded)
 
-    fail = fail_run(run_id)
+    fail = fail_run(etl_run_id)
 
     # DEPENDENCIES
 
-    run_id >> last_year
+    etl_run_id >> last_year
 
     dimensions >> rows_loaded
 
