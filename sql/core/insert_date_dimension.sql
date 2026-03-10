@@ -35,8 +35,10 @@ SELECT
     DATE_TRUNC('month', d)::DATE AS month_start_date,
     DATE_TRUNC('quarter', d)::DATE AS quarter_start_date,
     DATE_TRUNC('year', d)::DATE AS year_start_date
-FROM GENERATE_SERIES(
-    '2000-01-01'::DATE,
-    '2035-12-31'::DATE,
-    INTERVAL '1 day'
-) AS d;
+FROM
+    GENERATE_SERIES(
+        '2000-01-01'::DATE,
+        '2035-12-31'::DATE,
+        INTERVAL '1 day'
+    ) AS d
+ON CONFLICT (date_key) DO NOTHING;
