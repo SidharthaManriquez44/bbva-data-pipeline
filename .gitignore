@@ -18,11 +18,7 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Coverage reports
 coverage.xml
-.coverage
-htmlcov/
 
 # Wrappers
 build/
