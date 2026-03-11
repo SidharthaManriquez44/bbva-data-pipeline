@@ -7,7 +7,7 @@ from src.load.channel_dimension import load_dim_channel
 from src.load.date_dimension import load_dim_date
 from src.load.load_mart import MartLoader
 
-from src.config.logger_confing import get_logger
+from src.config.logger_config import get_logger
 
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.load.load_fact import BankMetricsLoader
