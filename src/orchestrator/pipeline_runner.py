@@ -1,4 +1,4 @@
-from src.extract.extract_bbva_data import extract_bbva_data
+from src.extract.extract_bbva_data import extract_data
 from src.transform.bank_transformer import clean_bank_metrics
 from src.load.load_raw import load_raw_data
 from src.load.load_staging import load_staging_data
@@ -8,6 +8,7 @@ from src.load.date_dimension import load_dim_date
 from src.load.load_mart import MartLoader
 
 from src.config.logger_config import get_logger
+from pathlib import Path
 
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.load.load_fact import BankMetricsLoader
@@ -21,6 +22,7 @@ load_dotenv()
 
 logger = get_logger(__name__)
 pipeline_name = "bbva_data_pipeline"
+path = Path("data/bbva_bank_metrics.csv")
 
 
 def run_pipeline():
@@ -38,7 +40,7 @@ def run_pipeline():
         last_year = watermark_repo.get_last_year(pipeline_name)
 
         # EXTRACT
-        df = extract_bbva_data(last_year)
+        df = extract_data(path, last_year)
         logger.info(f"Extracted {len(df)} rows")
 
         if df.empty:
@@ -87,7 +89,3 @@ def run_pipeline():
         logger.error("Pipeline failed", exc_info=True)
 
         raise
-
-
-if __name__ == "__main__":
-    run_pipeline()

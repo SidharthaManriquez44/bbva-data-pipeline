@@ -1,14 +1,26 @@
 from pathlib import Path
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parents[2]
 
+def extract_data(path: Path, last_year: int | None = None) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
 
-def extract_bbva_data(last_year=None):
-    file_path = BASE_DIR / "data" / "bbva_bank_metrics.csv"
-    df = pd.read_csv(file_path)
+    readers = {
+        ".csv": pd.read_csv,
+        ".parquet": pd.read_parquet,
+        ".json": pd.read_json,
+        ".xlsx": pd.read_excel,
+    }
 
-    if last_year:
-        df = df[df["year"] > last_year]
+    suffix = path.suffix.lower()
+
+    if suffix not in readers:
+        raise ValueError(f"Unsupported file format: {suffix}")
+
+    df = readers[suffix](path)
+
+    if last_year is not None and "year" in df.columns:
+        df = df.query("year > @last_year")
 
     return df

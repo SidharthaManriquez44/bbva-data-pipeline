@@ -3,7 +3,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime
 
-from src.extract.extract_bbva_data import extract_bbva_data
+from src.extract.extract_bbva_data import extract_data
 from src.transform.bank_transformer import clean_bank_metrics
 from src.data_quality.bank_quality_checks import run_bank_quality_checks
 from src.load.load_raw import load_raw_data
@@ -13,13 +13,14 @@ from src.load.channel_dimension import load_dim_channel
 from src.load.date_dimension import load_dim_date
 from src.load.load_fact import BankMetricsLoader
 from src.load.load_mart import MartLoader
+from src.config.pipeline_settings import DATA_PATH, PIPELINE_NAME
 
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.data_access.watermark_repository import WatermarkRepository
 
 
 @dag(
-    dag_id="bbva_data_pipeline",
+    dag_id=PIPELINE_NAME,
     start_date=datetime(2024, 1, 1),
     schedule="@daily",
     catchup=False,
@@ -30,18 +31,18 @@ def bbva_pipeline():
     @task
     def start_run():
         repo = ETLRunRepository()
-        return repo.start_run("bbva_data_pipeline")
+        return repo.start_run(PIPELINE_NAME)
 
     @task
     def get_watermark():
         repo = WatermarkRepository()
-        return repo.get_last_year("bbva_data_pipeline")
+        return repo.get_last_year(PIPELINE_NAME)
 
     # EXTRACT
 
     @task
     def extract(last_year):
-        return extract_bbva_data(last_year)
+        return extract_data(DATA_PATH, last_year)
 
     # TRANSFORM
 
@@ -109,7 +110,7 @@ def bbva_pipeline():
     def update_watermark(df):
         repo = WatermarkRepository()
         new_year = int(df["year"].max())
-        repo.update_last_year("bbva_data_pipeline", new_year)
+        repo.update_last_year(PIPELINE_NAME, new_year)
 
     # META SUCCESS
 
@@ -131,23 +132,23 @@ def bbva_pipeline():
 
     last_year = get_watermark()
 
-    df = extract(last_year)
+    df_extracted = extract(last_year)
 
-    df = transform(df)
+    df_transformed = transform(df_extracted)
 
-    df = quality(df)
+    df_quality = quality(df_transformed)
 
-    df = raw(df)
+    df_raw = raw(df_quality)
 
-    df = staging(df)
+    df_staging = staging(df_raw)
 
-    df >> dimensions
+    df_staging >> dimensions
 
     rows_loaded = fact(etl_run_id)
 
     marts_task = marts()
 
-    update = update_watermark(df)
+    update = update_watermark(df_staging)
 
     finish = finish_run(etl_run_id, rows_loaded)
 
