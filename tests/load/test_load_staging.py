@@ -21,7 +21,7 @@ def test_load_staging_data_create_engine(mock_get_engine, mock_load_sql, clean_d
     fake_conn.execute.assert_called_once()
 
 
-# Test 1: Using an external connection
+# Test 2: Using an external connection
 @patch("src.load.load_staging.load_sql")
 def test_load_staging_data_with_connection(mock_load_sql, clean_data_df):
     mock_load_sql.return_value = "SELECT 1"
