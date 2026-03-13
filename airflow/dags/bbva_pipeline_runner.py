@@ -2,6 +2,7 @@ from airflow.decorators import dag, task
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime
+import pandas as pd
 
 from src.extract.extract_bbva_data import extract_data
 from src.transform.bank_transformer import clean_bank_metrics
@@ -13,7 +14,7 @@ from src.load.channel_dimension import load_dim_channel
 from src.load.date_dimension import load_dim_date
 from src.load.load_fact import BankMetricsLoader
 from src.load.load_mart import MartLoader
-from src.config.pipeline_settings import DATA_PATH, PIPELINE_NAME
+from src.config.pipeline_settings import DATA_PATH, PIPELINE_NAME, OUTPUT_RAW, OUTPUT_STAGING
 
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.data_access.watermark_repository import WatermarkRepository
@@ -42,34 +43,59 @@ def bbva_pipeline():
 
     @task
     def extract(last_year):
-        return extract_data(DATA_PATH, last_year)
+        df = extract_data(DATA_PATH, last_year)
+
+        output = OUTPUT_RAW
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        df.to_parquet(output)
+
+        return str(output)
 
     # TRANSFORM
 
     @task
-    def transform(df):
-        return clean_bank_metrics(df)
+    def transform(input_path):
+        df = pd.read_parquet(input_path)
+
+        df = clean_bank_metrics(df)
+
+        output = OUTPUT_STAGING
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        df.to_parquet(output)
+
+        return str(output)
 
     # QUALITY
 
     @task
-    def quality(df):
+    def quality(input_path):
+        df = pd.read_parquet(input_path)
+
         run_bank_quality_checks(df)
-        return df
+
+        return input_path
 
     # RAW
 
     @task
-    def raw(df):
+    def raw(input_path):
+        df = pd.read_parquet(input_path)
+
         load_raw_data(df)
-        return df
+
+        return input_path
 
     # STAGING
 
     @task
-    def staging(df):
+    def staging(input_path):
+        df = pd.read_parquet(input_path)
+
         load_staging_data(df)
-        return df
+
+        return input_path
 
     # DIMENSIONS
 
@@ -107,9 +133,13 @@ def bbva_pipeline():
     # WATERMARK UPDATE
 
     @task
-    def update_watermark(df):
+    def update_watermark(input_path):
+        df = pd.read_parquet(input_path)
+
         repo = WatermarkRepository()
+
         new_year = int(df["year"].max())
+
         repo.update_last_year(PIPELINE_NAME, new_year)
 
     # META SUCCESS
