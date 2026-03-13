@@ -68,3 +68,28 @@ def clean_data_df():
         }
     )
     return clean_df
+
+
+@pytest.fixture
+def fake_query():
+    query = "INSERT INTO table VALUES (...)"
+    return query
+
+
+@pytest.fixture
+def sample_csv(tmp_path):
+    data = {
+        "bank_code": ["BBVA", "BBVA", "BBVA"],
+        "year": [2023, 2024, 2025],
+        "branches": [1700, 1616, 1532],
+        "atms": [12950, 13400, 14019],
+        "total_clients": [27500000, 28000000, 29500000],
+        "digital_clients": [21000000, 22000000, 23000000],
+        "total_loans": [1550000000000, 1650000000000, 1750000000000],
+        "total_deposits": [1600000000000, 1700000000000, 1780000000000],
+        "net_income": [780000000000, 550000000000, 900000000000],
+    }
+    df = pd.DataFrame(data)
+    csv_path = tmp_path / "data.csv"
+    df.to_csv(csv_path, index=False)
+    return csv_path
