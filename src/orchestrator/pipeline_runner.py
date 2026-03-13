@@ -6,23 +6,16 @@ from src.load.bank_dimension import load_dim_bank
 from src.load.channel_dimension import load_dim_channel
 from src.load.date_dimension import load_dim_date
 from src.load.load_mart import MartLoader
-
 from src.config.logger_config import get_logger
-from pathlib import Path
-
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.load.load_fact import BankMetricsLoader
 from src.data_access.watermark_repository import WatermarkRepository
-
+from src.config.pipeline_settings import DATA_PATH, PIPELINE_NAME
 from src.data_quality.bank_quality_checks import run_bank_quality_checks
-
 from dotenv import load_dotenv
 
 load_dotenv()
-
 logger = get_logger(__name__)
-pipeline_name = "bbva_data_pipeline"
-path = Path("data/bbva_bank_metrics.csv")
 
 
 def run_pipeline():
@@ -31,16 +24,16 @@ def run_pipeline():
     fact_loader = BankMetricsLoader()
     mart_loader = MartLoader()
 
-    run_id = repo.start_run(pipeline_name)
+    run_id = repo.start_run(PIPELINE_NAME)
 
     try:
         logger.info("Starting pipeline...")
 
         # WATERMARK
-        last_year = watermark_repo.get_last_year(pipeline_name)
+        last_year = watermark_repo.get_last_year(PIPELINE_NAME)
 
         # EXTRACT
-        df = extract_data(path, last_year)
+        df = extract_data(DATA_PATH, last_year)
         logger.info(f"Extracted {len(df)} rows")
 
         if df.empty:
@@ -74,7 +67,7 @@ def run_pipeline():
 
         # UPDATE WATERMARK
         new_watermark = int(df["year"].max())
-        watermark_repo.update_last_year(pipeline_name, new_watermark)
+        watermark_repo.update_last_year(PIPELINE_NAME, new_watermark)
 
         logger.info(f"Watermark updated to: {new_watermark}")
 
