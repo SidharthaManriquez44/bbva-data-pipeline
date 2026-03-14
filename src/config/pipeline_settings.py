@@ -8,5 +8,5 @@ except Exception:
     DATA_PATH = Path(os.getenv("BBVA_DATA_PATH", "data/bbva_bank_metrics.csv"))
 
 PIPELINE_NAME = "bbva_data_pipeline"
-OUTPUT_RAW = "data/intermediate/raw.parquet"
-OUTPUT_STAGING = "data/intermediate/staging.parquet"
+OUTPUT_RAW = Path("/opt/airflow/data/intermediate/raw.parquet")
+OUTPUT_STAGING = Path("/opt/airflow/data/intermediate/staging.parquet")

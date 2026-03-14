@@ -15,7 +15,7 @@ from src.load.date_dimension import load_dim_date
 from src.load.load_fact import BankMetricsLoader
 from src.load.load_mart import MartLoader
 from src.config.pipeline_settings import DATA_PATH, PIPELINE_NAME, OUTPUT_RAW, OUTPUT_STAGING
-
+from src.data_access.etl_metrics_repository import ETLMetricsRepository
 from src.data_access.etl_run_repository import ETLRunRepository
 from src.data_access.watermark_repository import WatermarkRepository
 
@@ -50,6 +50,13 @@ def bbva_pipeline():
 
         df.to_parquet(output)
 
+        # METRIC
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "extract",
+            len(df),
+        )
+
         return str(output)
 
     # TRANSFORM
@@ -65,6 +72,12 @@ def bbva_pipeline():
 
         df.to_parquet(output)
 
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "transform",
+            len(df),
+        )
+
         return str(output)
 
     # QUALITY
@@ -74,6 +87,12 @@ def bbva_pipeline():
         df = pd.read_parquet(input_path)
 
         run_bank_quality_checks(df)
+
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "quality",
+            len(df),
+        )
 
         return input_path
 
@@ -85,6 +104,12 @@ def bbva_pipeline():
 
         load_raw_data(df)
 
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "raw",
+            len(df),
+        )
+
         return input_path
 
     # STAGING
@@ -94,6 +119,12 @@ def bbva_pipeline():
         df = pd.read_parquet(input_path)
 
         load_staging_data(df)
+
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "staging",
+            len(df),
+        )
 
         return input_path
 
@@ -122,6 +153,14 @@ def bbva_pipeline():
     @task
     def fact(etl_run_id):
         loader = BankMetricsLoader()
+        rows = loader.load(etl_run_id)
+
+        ETLMetricsRepository().insert_metric(
+            PIPELINE_NAME,
+            "fact",
+            rows,
+        )
+
         return loader.load(etl_run_id)
 
     # MARTS
