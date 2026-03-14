@@ -1,4 +1,4 @@
-INSERT INTO etl_step_metrics (
+INSERT INTO meta.etl_step_metrics (
     pipeline_name,
     step_name,
     rows_processed
