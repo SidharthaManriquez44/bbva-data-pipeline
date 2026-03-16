@@ -24,13 +24,11 @@ services:
     depends_on:
       - postgres
       - airflow-init
-    env_file:
-      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-dev-secret}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-dev-fernet}
       PYTHONPATH: /opt/airflow
       _PIP_ADDITIONAL_REQUIREMENTS: -r /opt/airflow/requirements.txt
     volumes:
@@ -47,13 +45,11 @@ services:
     image: apache/airflow:2.9.0-python3.10
     depends_on:
       - airflow-webserver
-    env_file:
-      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-dev-secret}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-dev-fernet}
       PYTHONPATH: /opt/airflow
       _PIP_ADDITIONAL_REQUIREMENTS: -r /opt/airflow/requirements.txt
     volumes:
