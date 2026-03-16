@@ -1,6 +1,9 @@
 import pytest
 import pandas as pd
 from src.config.db_local import get_engine
+from dotenv import load_dotenv
+
+load_dotenv(".env.test")
 
 
 @pytest.fixture
