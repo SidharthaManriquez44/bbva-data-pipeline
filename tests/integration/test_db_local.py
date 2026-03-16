@@ -1,16 +1,15 @@
 import pytest
-from sqlalchemy import create_engine, text
-from testcontainers.postgres import PostgresContainer
+from sqlalchemy import text
+from src.config.database import get_engine
 
 
 @pytest.mark.integration
 def test_postgres_connection():
-    with PostgresContainer("postgres:16") as postgres:
-        engine = create_engine(postgres.get_connection_url())
+    engine = get_engine()
 
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT version()"))
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT version()"))
 
-        version = result.scalar()
+    version = result.scalar()
 
-        assert "PostgreSQL" in version
+    assert "PostgreSQL" in version

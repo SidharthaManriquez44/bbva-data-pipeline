@@ -1,15 +1,13 @@
 import subprocess
+import os
 import time
 import pytest
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-import pathlib
-
-load_dotenv(pathlib.Path(__file__).parent / ".env.test")
+from sqlalchemy import text
+from src.config.database import get_engine
 
 
 def wait_for_postgres():
-    engine = create_engine("postgresql+psycopg2://airflow:airflow@localhost:5432/airflow")
+    engine = get_engine()
 
     for i in range(30):
         try:
@@ -28,6 +26,12 @@ def wait_for_postgres():
 
 @pytest.fixture(scope="session", autouse=True)
 def postgres_container():
+    # In CI the postgres service already exists
+    if os.getenv("CI") == "true":
+        yield
+        return
+
+    # Local: start postgres container
     subprocess.run(["docker", "compose", "up", "-d", "postgres"], check=True)
 
     wait_for_postgres()
