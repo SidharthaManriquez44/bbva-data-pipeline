@@ -9,6 +9,3 @@ psycopg2-binary
 python-dotenv
 apache-airflow-providers-postgres
 pyarrow
-
-pydantic-settings
-direnv
