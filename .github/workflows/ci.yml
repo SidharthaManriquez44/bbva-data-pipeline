@@ -11,13 +11,60 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       PYTHONUNBUFFERED: 1
 
-    steps:
+  lint:
+    runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Ensure .env exists
+        run: |
+          if [ ! -f .env ]; then
+            echo "POSTGRES_USER=airflow" >> .env
+            echo "POSTGRES_PASSWORD=airflow" >> .env
+            echo "POSTGRES_DB=airflow" >> .env
+            echo "DB_HOST=localhost" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_NAME=airflow" >> .env
+            echo "DB_USER=airflow" >> .env
+            echo "DB_PASSWORD=airflow" >> .env
+            echo "AIRFLOW_SECRET_KEY=test-secret" >> .env
+            echo "AIRFLOW_FERNET_KEY=test-fernet" >> .env
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -46,7 +93,7 @@ jobs:
 
       - name: Cleanup Docker
         if: always()
-        run: docker compose down -v
+        run: docker compose down -v  || true
 
       - name: Validate package structure
         run: |
