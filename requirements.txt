@@ -11,3 +11,4 @@ apache-airflow-providers-postgres
 pyarrow
 
 pydantic-settings
+direnv
