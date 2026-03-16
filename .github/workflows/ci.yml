@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  ci:
 
     runs-on: ubuntu-latest
 
@@ -28,43 +28,29 @@ jobs:
 
     env:
       PYTHONUNBUFFERED: 1
-
-  lint:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: airflow
-          POSTGRES_PASSWORD: airflow
-          POSTGRES_DB: airflow
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U airflow"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: airflow
+      DB_USER: airflow
+      DB_PASSWORD: airflow
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ensure .env exists
+      - name: Create .env for tests
         run: |
-          if [ ! -f .env ]; then
-            echo "POSTGRES_USER=airflow" >> .env
-            echo "POSTGRES_PASSWORD=airflow" >> .env
-            echo "POSTGRES_DB=airflow" >> .env
-            echo "DB_HOST=localhost" >> .env
-            echo "DB_PORT=5432" >> .env
-            echo "DB_NAME=airflow" >> .env
-            echo "DB_USER=airflow" >> .env
-            echo "DB_PASSWORD=airflow" >> .env
-            echo "AIRFLOW_SECRET_KEY=test-secret" >> .env
-            echo "AIRFLOW_FERNET_KEY=test-fernet" >> .env
-          fi
+          echo "POSTGRES_USER=airflow" >> .env
+          echo "POSTGRES_PASSWORD=airflow" >> .env
+          echo "POSTGRES_DB=airflow" >> .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "DB_NAME=airflow" >> .env
+          echo "DB_USER=airflow" >> .env
+          echo "DB_PASSWORD=airflow" >> .env
+          echo "AIRFLOW_SECRET_KEY=test-secret" >> .env
+          echo "AIRFLOW_FERNET_KEY=test-fernet" >> .env
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -87,17 +73,8 @@ jobs:
           pip install -r requirements-dev.txt -c constraints.txt
           pip install -e .
 
-      - name: Run integration tests
-        run: |
-          pytest -m integration
-
-      - name: Cleanup Docker
-        if: always()
-        run: docker compose down -v  || true
-
       - name: Validate package structure
-        run: |
-          python -c "import src"
+        run: python -c "import src"
 
       - name: Validate all project imports
         run: |
@@ -122,16 +99,8 @@ jobs:
           print("All modules imported successfully")
           EOF
 
-      - name: Debug project structure
-        run: |
-          echo "Working directory:"
-          pwd
-          echo "Project tree:"
-          ls -R
-
       - name: Lint SQL files
-        run: |
-          sqlfluff lint sql --dialect postgres
+        run: sqlfluff lint sql --dialect postgres
 
       - name: Validate Airflow DAGs
         run: |
@@ -164,9 +133,14 @@ jobs:
           pip install ruff
           ruff check src tests
 
+      - name: Run unit tests
+        run: pytest
+
+      - name: Run integration tests
+        run: pytest -m integration
+
       - name: Run tests with coverage
-        run: |
-          pytest --cov=src --cov-report=term-missing --cov-report=xml
+        run: pytest --cov=src --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage report
         if: always()
