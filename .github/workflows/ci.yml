@@ -40,6 +40,14 @@ jobs:
           pip install -r requirements-dev.txt -c constraints.txt
           pip install -e .
 
+      - name: Run integration tests
+        run: |
+          pytest -m integration
+
+      - name: Cleanup Docker
+        if: always()
+        run: docker compose down -v
+
       - name: Validate package structure
         run: |
           python -c "import src"
