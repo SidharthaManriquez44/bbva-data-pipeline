@@ -33,6 +33,29 @@ WHERE
     AND c.current_name IS NOT NULL
     AND c.current_name <> c.bank_name;
 
+WITH source_clean AS (
+    SELECT DISTINCT
+        bank_code,
+        CASE
+            WHEN bank_code = 'BBVA' THEN 'BBVA México'
+            ELSE bank_code
+        END AS bank_name
+    FROM staging.bank_year_metrics_clean
+),
+
+changes AS (
+    SELECT
+        s.bank_code,
+        s.bank_name,
+        t.bank_key,
+        t.bank_name AS current_name
+    FROM source_clean AS s
+    LEFT JOIN core.dim_bank AS t
+        ON
+            s.bank_code = t.bank_code
+            AND t.is_current = TRUE
+)
+
 INSERT INTO core.dim_bank (
     bank_code,
     bank_name,
