@@ -1,21 +1,27 @@
 BEGIN;
 
--- 1. Close current record (only if changed)
+WITH source_clean AS (
+    SELECT DISTINCT
+        bank_code,
+        CASE
+            WHEN bank_code = 'BBVA' THEN 'BBVA México'
+            ELSE bank_code
+        END AS bank_name
+    FROM staging.bank_year_metrics_clean
+)
+
+-- 1. Close current record
 UPDATE core.dim_bank t
 SET
     effective_to = CURRENT_DATE,
     is_current = FALSE
-FROM staging.bank_year_metrics_clean AS s
+FROM source_clean AS s
 WHERE
     t.bank_code = s.bank_code
     AND t.is_current = TRUE
-    AND t.bank_name
-    <> CASE
-        WHEN s.bank_code = 'BBVA' THEN 'BBVA México'
-        ELSE s.bank_code
-    END;
+    AND t.bank_name <> s.bank_name;
 
--- 2. Insert new version (only real changes AND not already inserted today)
+-- 2. Insert new version
 INSERT INTO core.dim_bank (
     bank_code,
     bank_name,
@@ -24,13 +30,10 @@ INSERT INTO core.dim_bank (
 )
 SELECT
     s.bank_code,
-    CASE
-        WHEN s.bank_code = 'BBVA' THEN 'BBVA México'
-        ELSE s.bank_code
-    END AS bank_name,
+    s.bank_name,
     CURRENT_DATE AS effective_from,
     TRUE AS is_current
-FROM staging.bank_year_metrics_clean AS s
+FROM source_clean AS s
 LEFT JOIN core.dim_bank AS t
     ON
         s.bank_code = t.bank_code
@@ -38,11 +41,7 @@ LEFT JOIN core.dim_bank AS t
 WHERE
     (
         t.bank_code IS NULL
-        OR t.bank_name
-        <> CASE
-            WHEN s.bank_code = 'BBVA' THEN 'BBVA México'
-            ELSE s.bank_code
-        END
+        OR t.bank_name <> s.bank_name
     )
     AND NOT EXISTS (
         SELECT 1
