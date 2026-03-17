@@ -1,3 +1,5 @@
+BEGIN;
+
 INSERT INTO core.dim_date (
     date_key,
     date,
@@ -24,9 +26,9 @@ SELECT
     EXTRACT(QUARTER FROM d)::SMALLINT AS quarter,
     EXTRACT(MONTH FROM d)::SMALLINT AS month,
     EXTRACT(DAY FROM d)::SMALLINT AS day,
-    TO_CHAR(d, 'Month') AS month_name,
-    TO_CHAR(d, 'Day') AS day_name,
-    EXTRACT(WEEK FROM d)::SMALLINT AS week_of_year,
+    TO_CHAR(d, 'FMMonth') AS month_name,
+    TO_CHAR(d, 'FMDay') AS day_name,
+    EXTRACT(isoweek FROM d)::SMALLINT AS week_of_year,
     EXTRACT(ISODOW FROM d)::SMALLINT AS day_of_week,
     EXTRACT(ISODOW FROM d) IN (6,7) AS is_weekend,
     (DATE_TRUNC('month', d) + INTERVAL '1 month - 1 day')::DATE = d AS is_month_end,
@@ -42,3 +44,5 @@ FROM
         INTERVAL '1 day'
     ) AS d
 ON CONFLICT (date_key) DO NOTHING;
+
+COMMIT;
