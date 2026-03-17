@@ -15,7 +15,7 @@ WHERE
         ELSE s.bank_code
     END;
 
--- 2. Insert new version (only real changes)
+-- 2. Insert new version (only real changes AND not already inserted today)
 INSERT INTO core.dim_bank (
     bank_code,
     bank_name,
@@ -36,11 +36,20 @@ LEFT JOIN core.dim_bank AS t
         s.bank_code = t.bank_code
         AND t.is_current = TRUE
 WHERE
-    t.bank_code IS NULL
-    OR t.bank_name
-    <> CASE
-        WHEN s.bank_code = 'BBVA' THEN 'BBVA México'
-        ELSE s.bank_code
-    END;
+    (
+        t.bank_code IS NULL
+        OR t.bank_name
+        <> CASE
+            WHEN s.bank_code = 'BBVA' THEN 'BBVA México'
+            ELSE s.bank_code
+        END
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM core.dim_bank AS t2
+        WHERE
+            t2.bank_code = s.bank_code
+            AND t2.effective_from = CURRENT_DATE
+    );
 
 COMMIT;
