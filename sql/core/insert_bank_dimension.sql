@@ -8,20 +8,31 @@ WITH source_clean AS (
             ELSE bank_code
         END AS bank_name
     FROM staging.bank_year_metrics_clean
+),
+
+changes AS (
+    SELECT
+        s.bank_code,
+        s.bank_name,
+        t.bank_key,
+        t.bank_name AS current_name
+    FROM source_clean AS s
+    LEFT JOIN core.dim_bank AS t
+        ON
+            s.bank_code = t.bank_code
+            AND t.is_current = TRUE
 )
 
--- 1. Close current record
 UPDATE core.dim_bank t
 SET
     effective_to = CURRENT_DATE,
     is_current = FALSE
-FROM source_clean AS s
+FROM changes AS c
 WHERE
-    t.bank_code = s.bank_code
-    AND t.is_current = TRUE
-    AND t.bank_name <> s.bank_name;
+    t.bank_key = c.bank_key
+    AND c.current_name IS NOT NULL
+    AND c.current_name <> c.bank_name;
 
--- 2. Insert new version
 INSERT INTO core.dim_bank (
     bank_code,
     bank_name,
@@ -29,26 +40,14 @@ INSERT INTO core.dim_bank (
     is_current
 )
 SELECT
-    s.bank_code,
-    s.bank_name,
+    c.bank_code,
+    c.bank_name,
     CURRENT_DATE AS effective_from,
     TRUE AS is_current
-FROM source_clean AS s
-LEFT JOIN core.dim_bank AS t
-    ON
-        s.bank_code = t.bank_code
-        AND t.is_current = TRUE
+FROM changes AS c
 WHERE
-    (
-        t.bank_code IS NULL
-        OR t.bank_name <> s.bank_name
-    )
-    AND NOT EXISTS (
-        SELECT 1
-        FROM core.dim_bank AS t2
-        WHERE
-            t2.bank_code = s.bank_code
-            AND t2.effective_from = CURRENT_DATE
-    );
+    c.current_name IS NULL
+    OR c.current_name <> c.bank_name
+ON CONFLICT (bank_code, effective_from) DO NOTHING;
 
 COMMIT;
