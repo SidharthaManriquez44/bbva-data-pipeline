@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from src.config.db_config import get_engine
+from src.config.database import get_engine
 from src.utils.sql_loader import load_sql
 
 

@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from src.config.db_local import get_engine
+from src.config.database import get_engine
 from dotenv import load_dotenv
 
 load_dotenv(".env.test")
