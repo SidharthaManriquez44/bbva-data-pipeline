@@ -1,5 +1,6 @@
 import os
 from sqlalchemy import create_engine
+from src.config.settings import settings
 
 
 def get_engine():
@@ -9,7 +10,8 @@ def get_engine():
     - Uses Airflow connection if running inside Airflow
     - Uses environment variables otherwise (CI, tests, scripts)
     """
-
+    # This automatically triggers validation.
+    _ = settings
     # Detect Airflow runtime
     if os.getenv("AIRFLOW_CTX_DAG_ID"):
         from airflow.providers.postgres.hooks.postgres import PostgresHook
